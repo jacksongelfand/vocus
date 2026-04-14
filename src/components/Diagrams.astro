@@ -1,0 +1,183 @@
+---
+---
+
+<section id="architecture" class="arch-section py-28">
+  <div class="max-w-6xl mx-auto px-6">
+
+    <div class="text-center mb-20 reveal">
+      <span class="section-label">Architecture</span>
+      <h2 class="text-4xl md:text-5xl font-bold">How It Works</h2>
+    </div>
+
+    <!-- System architecture -->
+    <div class="mb-16 reveal">
+      <h3 class="text-xl font-semibold mb-5">System Architecture</h3>
+      <div class="diagram-box">
+        <div class="mermaid">
+graph TB
+    classDef sensor fill:#7c2e0e,stroke:#F87239,color:#fde8d8
+    classDef mcu    fill:#0f1e52,stroke:#5B7CF9,color:#c7d5ff
+    classDef out    fill:#0a3320,stroke:#4ade80,color:#d1fae5
+    classDef ctrl   fill:#2d1b6e,stroke:#a78bfa,color:#ede9fe
+    classDef cfg    fill:#2a1d00,stroke:#fbbf24,color:#fef3c7
+
+    BME["BME688\nTemp · Hum · Gas R"]:::sensor
+    BTNS["4 Button Control"]:::ctrl
+    CFG[("settings.json")]:::cfg
+
+    subgraph MCU["RP2350 — MicroPython"]
+        SM["sensor.py"]:::mcu
+        CTRL["controller.py"]:::mcu
+        DISP["display.py"]:::mcu
+        MENU["menu.py"]:::mcu
+        LOG["log.py"]:::mcu
+    end
+
+    LCD["16×2 LCD"]:::out
+    LED["RGB LED"]:::out
+    FAN["PWM Fan"]:::out
+    RELAY["Relay"]:::out
+    BUZ["Buzzer"]:::out
+
+    BME -->|"I²C 400 kHz"| SM
+    SM --> CTRL
+    SM --> DISP --> LCD
+    BTNS --> MENU --> DISP
+    CTRL --> LED
+    CTRL --> FAN
+    CTRL --> RELAY
+    CTRL --> BUZ
+    CTRL -->|"save"| CFG
+    CFG -->|"load"| CTRL
+    CTRL --> LOG
+        </div>
+      </div>
+    </div>
+
+    <!-- State machine -->
+    <div class="mb-16 reveal">
+      <h3 class="text-xl font-semibold mb-5">Device State Machine</h3>
+      <div class="diagram-box">
+        <div class="mermaid">
+stateDiagram-v2
+    classDef boot    fill:#1a2040,stroke:#5B7CF9,color:#c7d5ff
+    classDef warmup  fill:#0f1e52,stroke:#8BA4FD,color:#c7d5ff
+    classDef learn   fill:#2d1b6e,stroke:#a78bfa,color:#ede9fe
+    classDef ok      fill:#0a3320,stroke:#4ade80,color:#d1fae5
+    classDef warn    fill:#3a2800,stroke:#fbbf24,color:#fef3c7
+    classDef alertst fill:#3b0f0f,stroke:#f87171,color:#fee2e2
+
+    [*] --> Boot
+    Boot --> Warmup : Hardware initialized
+    Warmup --> Learning : Gas reading stable for 60s
+    Learning --> OK : Baseline established (avg 5 samples)
+    OK --> WARN : Gas drops 30 pct below baseline
+    OK --> ALERT : Gas drops 50 pct below baseline
+    WARN --> OK : Recovered
+    WARN --> ALERT : Escalated
+    ALERT --> WARN : Partial recovery
+    ALERT --> OK : Full recovery
+
+    class Boot boot
+    class Warmup warmup
+    class Learning learn
+    class OK ok
+    class WARN warn
+    class ALERT alertst
+        </div>
+      </div>
+      <div class="mt-5 grid md:grid-cols-3 gap-4 text-sm">
+        <div class="glass p-4 rounded-xl">
+          <strong class="block mb-1" style="color:#8BA4FD">Warmup</strong>
+          <span class="text-gray-500">LED blue · Fan at minimum. Gas sensor heats to operating temperature (~320 °C). Minimum 60 s or until readings stabilize (&lt;4% variation across 6 samples).</span>
+        </div>
+        <div class="glass p-4 rounded-xl">
+          <strong class="block mb-1" style="color:#8BA4FD">Learning</strong>
+          <span class="text-gray-500">Collects 5 consecutive gas resistance readings and averages them into a personal clean-air baseline. LCD shows progress (e.g. <code class="font-mono text-xs">Lrn:182k [3/5]</code>).</span>
+        </div>
+        <div class="glass p-4 rounded-xl">
+          <strong class="block mb-1" style="color:#8BA4FD">Adaptive Drift</strong>
+          <span class="text-gray-500">The baseline slowly drifts upward (0.2% per reading) if current gas R exceeds it; keeping pace with long-term sensor conditioning. Never drifts downward.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- IAQ algorithm -->
+    <div class="reveal">
+      <h3 class="text-xl font-semibold mb-5">IAQ Score Calculation</h3>
+      <div class="diagram-box">
+        <div class="mermaid">
+flowchart LR
+    classDef input  fill:#7c2e0e,stroke:#F87239,color:#fde8d8
+    classDef score  fill:#0f1e52,stroke:#5B7CF9,color:#c7d5ff
+    classDef comb   fill:#2d1b6e,stroke:#a78bfa,color:#ede9fe
+    classDef iaq    fill:#0a2233,stroke:#06b6d4,color:#cffafe
+    classDef clean  fill:#0a3320,stroke:#4ade80,color:#d1fae5
+    classDef mod    fill:#3a2800,stroke:#fbbf24,color:#fef3c7
+    classDef poor   fill:#3b0f0f,stroke:#f87171,color:#fee2e2
+
+    GAS["Gas Resistance\nin Ohms"]:::input
+    HUM["Humidity\nin % RH"]:::input
+    GS["Gas Score\nlog R / log 150000\nclamped 0–1"]:::score
+    HS["Humidity Score\n1 − |RH−40| / 40\nclamped 0–1"]:::score
+    COMB["Combined Score\ngas×0.75 + hum×0.25"]:::comb
+    IAQ["IAQ Index\n(1 − combined) × 100"]:::iaq
+    R1["0 – 30\nClean Air"]:::clean
+    R2["30 – 60\nModerate"]:::mod
+    R3["60 – 100\nPoor Air"]:::poor
+
+    GAS --> GS
+    HUM --> HS
+    GS -->|"75% weight"| COMB
+    HS -->|"25% weight"| COMB
+    COMB --> IAQ
+    IAQ --> R1
+    IAQ --> R2
+    IAQ --> R3
+        </div>
+      </div>
+      <div class="mt-5 glass p-5 rounded-xl text-sm text-gray-500 leading-relaxed">
+        <strong class="text-gray-200">Why gas resistance?</strong>
+        The BME688 contains a heated metal-oxide element (~320 °C). Airborne VOCs react with
+        its surface and lower its electrical resistance. Cleaner air creates a higher resistance.
+        Gas R &gt;150 kΩ is excellent; &lt;10 kΩ indicates significant pollution.
+        Humidity is weighted at 25% because deviation from the ideal 40% RH also degrades air comfort.
+        <br><br>
+        <strong class="text-gray-200">Note:</strong> This formula is a simplified open approximation.
+        Bosch's official BSEC library (closed-source, ESP32) uses a more complex algorithm.
+        This simplified implementation runs on the Pico with only 264 KB RAM.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+.arch-section {
+  background: rgba(0,0,0,.2);
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+</style>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof mermaid === 'undefined') return;
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        background:          '#0B0F1E',
+        primaryColor:        '#1a2560',
+        primaryTextColor:    '#E4E7F0',
+        primaryBorderColor:  '#5B7CF9',
+        lineColor:           '#5B7CF9',
+        secondaryColor:      '#161c38',
+        tertiaryColor:       '#0d1125',
+        edgeLabelBackground: '#0B0F1E',
+        fontFamily:          'Inter, sans-serif',
+        fontSize:            '14px',
+      },
+      flowchart: { curve: 'basis', padding: 20 },
+    });
+  });
+</script>

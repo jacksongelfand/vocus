@@ -1,0 +1,352 @@
+---
+// ── Real test data — Kilz oil-based primer in sealed enclosure ──
+// Sensor readings sampled every ~2 min across a 105-minute run.
+// Baseline: 12.9 kΩ  |  WARN < 70% of baseline  |  ALERT < 50% of baseline
+const BASELINE = 12.9;
+const experiments = [
+  {
+    id: 0,
+    label: 'Kilz Oil-Based Primer — Sealed Enclosure',
+    desc: 'Vocus was placed inside a sealed enclosure with Kilz' +
+    ' oil-based primer applied to simulate the sustained high-VOC' +
+    ' output of a 3D printer. The device used a previously learned' + 
+    ' clean-air baseline of 12.9 kΩ. VOC levels climbed steadily as' +
+    ' the primer off-gassed, crossing WARN (~9.0 kΩ) at 33 minutes' +
+    ' and ALERT (~6.5 kΩ) at 58 minutes. The peak reading was 6.2 kΩ, a 52%' +
+    ' decrease from baseline. The enclosure was opened around t = 62 min;' +
+    ' recovery was gradual, returning to the WARN threshold by ~95 minutes.',
+    labels: ["2m","3m","5m","7m","8m","10m","12m","13m","15m","17m","18m","20m","22m","23m","25m","27m","28m","30m","32m","33m","35m","37m","38m","40m","42m","43m","45m","47m","48m","50m","52m","53m","55m","57m","58m","60m","62m","63m","65m","72m","75m","79m","82m","85m","89m","92m","95m","99m","102m","104m","105m"],
+    gas:    [12.7,12.8,13.7,13.9,14.3,13.7,12.7,12.1,11.8,11.4,11.1,10.8,10.5,10.3,10.1,9.8,9.6,9.3,9.1,8.9,8.7,8.4,8.2,8.1,7.9,7.6,7.5,7.3,7.2,7.0,6.8,6.7,6.6,6.5,6.3,6.2,7.5,7.9,8.1,8.3,8.4,8.5,8.6,8.7,8.8,9.0,9.1,9.3,9.7,9.8,10.1],
+    temp:   [20.0,20.0,20.0,20.0,19.9,19.9,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.8,19.7,19.7,19.6,19.4,19.2,19.2,19.1,19.1,19.1,19.1,19.1,19.1,19.0,18.9,18.8],
+    hum:    [42,42,42,42,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,43,44,44,44,44,45,45,45,45,45,45,45,45,46,46],
+    alerts: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0],
+    stats: [
+      { v:'52%',   l:'Peak VOC drop',    n:'6.2 kΩ vs 12.9 kΩ baseline' },
+      { v:'33 min', l:'First WARN',       n:'9.0 kΩ threshold crossed'   },
+      { v:'58 min', l:'First ALERT',      n:'6.5 kΩ threshold crossed'   },
+    ],
+  },
+];
+---
+
+<section id="data" class="data-section py-28">
+  <div class="max-w-6xl mx-auto px-6">
+
+    <div class="text-center mb-16 reveal">
+      <span class="section-label">Results</span>
+      <h2 class="text-4xl md:text-5xl font-bold mb-4">Test Data</h2>
+      <p class="text-gray-500">Controlled experiments measuring Vocus's response to real VOC events</p>
+    </div>
+
+    <!-- Charts — click any card to enlarge -->
+    <div class="grid md:grid-cols-2 gap-6 reveal">
+      <div class="glass p-6 rounded-2xl chart-card" data-chart="gas">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">Gas Resistance (kΩ) — VOC Indicator</h3>
+          <span class="font-mono text-xs text-gray-600">higher = cleaner</span>
+        </div>
+        <div style="height:220px"><canvas id="chart-gas"></canvas></div>
+      </div>
+      <div class="glass p-6 rounded-2xl chart-card" data-chart="pct">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">% of Baseline</h3>
+          <span class="font-mono text-xs text-gray-600">WARN &lt; 70% · ALERT &lt; 50%</span>
+        </div>
+        <div style="height:220px"><canvas id="chart-pct"></canvas></div>
+      </div>
+      <div class="glass p-6 rounded-2xl chart-card" data-chart="env">
+        <h3 class="font-semibold mb-4">Temperature (°C) &amp; Humidity (%RH)</h3>
+        <div style="height:220px"><canvas id="chart-env"></canvas></div>
+      </div>
+      <div class="glass p-6 rounded-2xl chart-card" data-chart="alert">
+        <h3 class="font-semibold mb-4">Alert Level Timeline</h3>
+        <div style="height:220px"><canvas id="chart-alert"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="mt-8 glass p-7 rounded-2xl reveal">
+      <h4 class="font-semibold mb-3">Experiment Notes</h4>
+      <p id="exp-desc" class="text-sm text-gray-500 leading-relaxed"></p>
+      <div class="mt-6 grid grid-cols-3 gap-6" id="exp-stats"></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Enlarge modal -->
+<div id="chart-modal" class="chart-modal" aria-hidden="true">
+  <div class="chart-modal-inner">
+    <button id="chart-modal-close" aria-label="Close">&times;</button>
+    <div class="chart-modal-title" id="chart-modal-title"></div>
+    <div class="chart-modal-canvas-wrap">
+      <canvas id="chart-modal-canvas"></canvas>
+    </div>
+  </div>
+</div>
+
+<style>
+.data-section {
+  background: rgba(0,0,0,.2);
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+.chart-card {
+  cursor: zoom-in;
+  transition: box-shadow .2s, transform .15s;
+}
+.chart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px rgba(91,124,249,.35), 0 8px 32px rgba(0,0,0,.4);
+}
+
+/* Modal */
+.chart-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(7,11,22,.88);
+  backdrop-filter: blur(6px);
+  align-items: center; justify-content: center;
+}
+.chart-modal.open { display: flex; }
+
+.chart-modal-inner {
+  position: relative;
+  width: min(92vw, 1000px);
+  background: rgba(15,20,40,.95);
+  border: 1px solid rgba(91,124,249,.25);
+  border-radius: 1.25rem;
+  padding: 2rem 2rem 1.75rem;
+  box-shadow: 0 0 80px rgba(91,124,249,.18);
+}
+
+#chart-modal-close {
+  position: absolute; top: 1rem; right: 1.25rem;
+  background: none; border: none;
+  color: #6B7280; font-size: 1.75rem; line-height: 1;
+  cursor: pointer; transition: color .15s;
+}
+#chart-modal-close:hover { color: #E4E7F0; }
+
+.chart-modal-title {
+  font-size: .9rem; font-weight: 600;
+  color: #9CA3AF; margin-bottom: 1.25rem;
+}
+
+.chart-modal-canvas-wrap {
+  position: relative; height: 55vh; min-height: 300px;
+}
+#chart-modal-canvas { width: 100%; height: 100%; }
+</style>
+
+<!-- Pass server-side data into a global; define:vars works only in inline scripts -->
+<script is:inline define:vars={{ experiments, BASELINE }}>
+  window.__vocExperiments = experiments;
+  window.__vocBaseline = BASELINE;
+</script>
+
+<script>
+  import Chart from 'chart.js/auto';
+  const experiments = (window as any).__vocExperiments;
+  const BASELINE    = (window as any).__vocBaseline as number;
+
+  // ── Shared chart defaults ──────────────────────────────
+  const GRID = 'rgba(255,255,255,.05)';
+  const TICK = '#4B5563';
+
+  const baseOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 500 },
+    plugins: {
+      legend: { labels: { color: '#9CA3AF', boxWidth: 12, font: { size: 11 } } },
+      tooltip: {
+        backgroundColor: 'rgba(7,11,22,.92)',
+        titleColor: '#E4E7F0',
+        bodyColor: '#9CA3AF',
+        borderColor: 'rgba(91,124,249,.4)',
+        borderWidth: 1,
+      },
+    },
+    scales: {
+      x: { ticks: { color: TICK, font: { size: 10 } }, grid: { color: GRID } },
+      y: { ticks: { color: TICK }, grid: { color: GRID } },
+    },
+  };
+
+  // ── Chart config builders (return Chart constructor args) ──
+  function cfgGas(e) {
+    const lab = e.labels;
+    return {
+      type: 'line' as const,
+      data: {
+        labels: lab,
+        datasets: [{
+          label: 'Gas Resistance (kΩ)',
+          data: e.gas,
+          borderColor: '#5B7CF9', backgroundColor: 'rgba(91,124,249,.12)',
+          fill: true, tension: 0.4, pointRadius: 2,
+        }],
+      },
+      options: { ...baseOpts },
+    };
+  }
+
+  function cfgPct(e) {
+    const lab = e.labels;
+    const pct = e.gas.map(v => +((v / BASELINE) * 100).toFixed(1));
+    return {
+      type: 'line' as const,
+      data: {
+        labels: lab,
+        datasets: [
+          {
+            label: '% of Baseline',
+            data: pct,
+            borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,.12)',
+            fill: true, tension: 0.4, pointRadius: 2,
+          },
+          {
+            label: 'WARN threshold (70%)',
+            data: Array(lab.length).fill(70),
+            borderColor: '#fbbf24', backgroundColor: 'transparent',
+            borderDash: [6, 3], pointRadius: 0, tension: 0,
+          },
+          {
+            label: 'ALERT threshold (50%)',
+            data: Array(lab.length).fill(50),
+            borderColor: '#f87171', backgroundColor: 'transparent',
+            borderDash: [6, 3], pointRadius: 0, tension: 0,
+          },
+        ],
+      },
+      options: {
+        ...baseOpts,
+        scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, min: 0, max: 120, ticks: { color: TICK, callback: v => v + '%' } } },
+      },
+    };
+  }
+
+  function cfgEnv(e) {
+    const lab = e.labels;
+    return {
+      type: 'line' as const,
+      data: {
+        labels: lab,
+        datasets: [
+          { label: 'Temp (°C)',      data: e.temp, borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.4, pointRadius: 2, yAxisID: 'yT' },
+          { label: 'Humidity (%RH)', data: e.hum,  borderColor: '#06b6d4', backgroundColor: 'transparent', tension: 0.4, pointRadius: 2, yAxisID: 'yH' },
+        ],
+      },
+      options: {
+        ...baseOpts,
+        scales: {
+          x:  baseOpts.scales.x,
+          yT: { ...baseOpts.scales.y, position: 'left',  title: { display: true, text: '°C',   color: TICK } },
+          yH: { ...baseOpts.scales.y, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '%RH', color: TICK } },
+        },
+      },
+    };
+  }
+
+  function cfgAlert(e) {
+    const lab = e.labels;
+    return {
+      type: 'bar' as const,
+      data: {
+        labels: lab,
+        datasets: [{
+          label: 'Alert Level',
+          data: e.alerts,
+          backgroundColor: e.alerts.map(v => ['rgba(74,222,128,.55)','rgba(251,191,36,.55)','rgba(248,113,113,.55)'][v]),
+          borderColor:     e.alerts.map(v => ['#4ade80','#fbbf24','#f87171'][v]),
+          borderWidth: 1,
+        }],
+      },
+      options: {
+        ...baseOpts,
+        scales: {
+          x: baseOpts.scales.x,
+          y: {
+            ...baseOpts.scales.y, min: 0, max: 2,
+            ticks: { color: TICK, callback: v => ['OK','WARN','ALERT'][v] ?? '' },
+          },
+        },
+      },
+    };
+  }
+
+  // keyed map for modal use
+  const cfgMap = { gas: cfgGas, pct: cfgPct, env: cfgEnv, alert: cfgAlert };
+  const titleMap = {
+    gas:   'Gas Resistance (kΩ) — VOC Indicator',
+    pct:   '% of Baseline · WARN < 70% · ALERT < 50%',
+    env:   'Temperature (°C) & Humidity (%RH)',
+    alert: 'Alert Level Timeline',
+  };
+
+  let charts: Record<string, any> = {};
+
+  function destroyAll() {
+    Object.values(charts).forEach(c => c && c.destroy());
+    charts = {};
+  }
+
+  function ctx(id: string) { return (document.getElementById(id) as HTMLCanvasElement).getContext('2d'); }
+
+  function buildCharts(idx: number) {
+    destroyAll();
+    const e = experiments[idx];
+    charts.gas   = new Chart(ctx('chart-gas'),   cfgGas(e)   as any);
+    charts.pct   = new Chart(ctx('chart-pct'),   cfgPct(e)   as any);
+    charts.env   = new Chart(ctx('chart-env'),   cfgEnv(e)   as any);
+    charts.alert = new Chart(ctx('chart-alert'), cfgAlert(e) as any);
+
+    // Notes
+    document.getElementById('exp-desc')!.textContent = e.desc;
+    document.getElementById('exp-stats')!.innerHTML = e.stats.map(s =>
+      `<div class="text-center">
+         <div class="text-2xl font-bold mb-1" style="color:var(--blue)">${s.v}</div>
+         <div class="text-sm font-medium">${s.l}</div>
+         <div class="text-xs mt-0.5 text-gray-600">${s.n}</div>
+       </div>`
+    ).join('');
+  }
+
+  // ── Modal ──────────────────────────────────────────────
+  const modal      = document.getElementById('chart-modal')!;
+  const modalTitle = document.getElementById('chart-modal-title')!;
+  const modalClose = document.getElementById('chart-modal-close')!;
+  const modalCanvas = document.getElementById('chart-modal-canvas') as HTMLCanvasElement;
+  let modalChart: any = null;
+
+  function openModal(key: string) {
+    const e = experiments[0];
+    const builder = cfgMap[key as keyof typeof cfgMap];
+    if (!builder) return;
+    modalTitle.textContent = titleMap[key as keyof typeof titleMap] ?? '';
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    if (modalChart) { modalChart.destroy(); modalChart = null; }
+    modalChart = new Chart(modalCanvas.getContext('2d')!, builder(e) as any);
+  }
+
+  function closeModal() {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    if (modalChart) { modalChart.destroy(); modalChart = null; }
+  }
+
+  document.querySelectorAll<HTMLElement>('.chart-card').forEach(card => {
+    card.addEventListener('click', () => openModal(card.dataset.chart!));
+  });
+
+  modalClose.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  // Initial render
+  window.addEventListener('load', () => buildCharts(0));
+</script>

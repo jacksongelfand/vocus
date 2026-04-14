@@ -1,0 +1,95 @@
+---
+const features = [
+  {
+    color: 'rgba(91,124,249,.15)',
+    iconColor: '#5B7CF9',
+    icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>`,
+    title: 'Real-Time Detection',
+    body: 'The BME688\'s heated metal-oxide gas sensor detects resistance changes caused by airborne VOCs. Readings update every 2 seconds with sub-second alarm response.',
+  },
+  {
+    color: 'rgba(248,114,57,.15)',
+    iconColor: '#F87239',
+    icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>`,
+    title: 'Multi-Output Alerting',
+    body: 'Three severity levels drive RGB LED color, proportional fan speed, audio buzzer, and a relay that triggers an external exhaust fan; all automatically and simultaneously.',
+  },
+  {
+    color: 'rgba(168,85,247,.15)',
+    iconColor: '#a855f7',
+    icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>`,
+    title: 'Self-Calibrating',
+    body: 'After a 60-second warm-up, Vocus averages 5 clean-air readings into a personal baseline. Alerts fire on percentage drops from that baseline with no manual calibration needed.',
+  },
+];
+
+const alertLevels = [
+  {
+    cls: 'badge-ok',
+    level: 'OK',
+    desc: 'Clean air. Gas resistance within 70% of your personal baseline.',
+    range: '> 70% of baseline',
+    outputs: 'LED: Green · Fan: idle · Buzzer: off',
+  },
+  {
+    cls: 'badge-warn',
+    level: 'WARN',
+    desc: 'Moderate VOC presence. Fan speed increases proportionally to improve ventilation.',
+    range: '50–70% of baseline',
+    outputs: 'LED: Yellow · Fan: proportional · Buzzer: off',
+  },
+  {
+    cls: 'badge-alert',
+    level: 'ALERT',
+    desc: 'High VOC concentration. All outputs activate to clear the air immediately.',
+    range: '< 50% of baseline',
+    outputs: 'LED: Red · Fan: 100% · Buzzer: on · External Fan: on',
+  },
+];
+---
+
+<section id="about" class="py-28 max-w-6xl mx-auto px-6">
+  <!-- Header -->
+  <div class="text-center mb-20 reveal">
+    <span class="section-label">The Problem</span>
+    <h2 class="text-4xl md:text-5xl font-bold mb-5">The Hidden Hazard of 3D Printing</h2>
+    <p class="max-w-2xl mx-auto text-gray-500 leading-relaxed">
+      FDM and resin 3D printers emit significant volatile organic compounds during operation such as
+      styrene, formaldehyde, isocyanates, and photoinitiators depending on the filament or resin.
+      These compounds are <strong class="text-gray-200">colorless, largely odorless at dangerous concentrations</strong>,
+      and linked to respiratory irritation and long-term health effects with chronic exposure.
+      Most makers print indoors with no monitoring whatsoever.
+    </p>
+  </div>
+
+  <!-- Feature cards -->
+  <div class="grid md:grid-cols-3 gap-6 mb-16">
+    {features.map((f, i) => (
+      <div class="glass p-7 reveal" style={`transition-delay:${i * 0.1}s`}>
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-5"
+             style={`background:${f.color}`}>
+          <svg class="w-6 h-6" style={`color:${f.iconColor}`}
+               fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               set:html={f.icon} />
+        </div>
+        <h3 class="font-bold text-lg mb-2">{f.title}</h3>
+        <p class="text-sm text-gray-500 leading-relaxed">{f.body}</p>
+      </div>
+    ))}
+  </div>
+
+  <!-- Alert level cards -->
+  <div class="reveal">
+    <h3 class="text-xl font-semibold mb-6 text-center">Alert Level System</h3>
+    <div class="grid md:grid-cols-3 gap-5">
+      {alertLevels.map(a => (
+        <div class={`${a.cls} rounded-2xl p-6 text-center`}>
+          <div class="text-4xl font-black mb-3">{a.level}</div>
+          <p class="text-sm opacity-90 mb-3">{a.desc}</p>
+          <code class="text-xs opacity-60 block mb-4">{a.range}</code>
+          <p class="text-xs font-medium opacity-75">{a.outputs}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,156 @@
+---
+---
+<section class="hero">
+  <!-- Ambient orbs -->
+  <div class="orb orb-blue"></div>
+  <div class="orb orb-orange"></div>
+  <div class="orb orb-purple"></div>
+  <!-- Bottom fade into next section -->
+  <div class="vignette"></div>
+
+  <div class="hero-inner">
+    <!-- Live badge -->
+    <div class="badge">
+      <div class="live-dot"></div>
+      Norwalk Science Fair 2026 · VOC Detection
+    </div>
+
+    <!-- Logo with glow -->
+    <div class="logo-wrap">
+      <div class="logo-glow"></div>
+      <img src="/logo.png" alt="Vocus" class="logo-img">
+    </div>
+
+    <h1 class="hero-title grad">Vocus</h1>
+
+    <p class="hero-sub">Real-Time VOC Monitor</p>
+
+    <p class="hero-desc">
+      Built to protect makers from the invisible hazards of 3D printing.
+      Vocus monitors volatile organic compounds in real time and alerts when
+      VOC levels become dangerous and automatically activates ventilation.
+    </p>
+
+    <div class="cta-row">
+      <a href="#about" class="cta-primary">Explore Project</a>
+      <a href="#data"  class="cta-ghost glass">View Test Data</a>
+    </div>
+  </div>
+
+  <!-- Scroll cue -->
+  <div class="scroll-hint" aria-hidden="true">
+    Scroll
+    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </div>
+</section>
+
+<style>
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding-top: 4rem;
+  background-image:
+    linear-gradient(rgba(91,124,249,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(91,124,249,.07) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Orbs */
+.orb { position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none; }
+.orb-blue   { width:620px; height:620px; background:#3B5EE8; opacity:.16; top:-120px; left:-120px; }
+.orb-orange { width:420px; height:420px; background:#D95218; opacity:.13; top:55%; right:-60px; }
+.orb-purple { width:360px; height:360px; background:#6B3DE8; opacity:.10; bottom:0; left:38%; }
+
+.vignette {
+  position: absolute; bottom:0; left:0; right:0; height:180px; pointer-events:none;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+}
+
+.hero-inner {
+  position: relative; z-index: 10;
+  text-align: center;
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 6rem 1.5rem;
+}
+
+.badge {
+  display: inline-flex; align-items: center; gap: .5rem;
+  margin-bottom: 2.25rem;
+  padding: .4rem 1rem;
+  border-radius: 9999px;
+  font-size: .875rem; font-weight: 500;
+  background: rgba(91,124,249,.1);
+  border: 1px solid rgba(91,124,249,.3);
+  color: #8BA4FD;
+}
+
+.logo-wrap { position: relative; display: flex; justify-content: center; margin-bottom: 2rem; }
+.logo-glow {
+  position: absolute; inset:0; border-radius: 50%;
+  filter: blur(70px); opacity: .55; transform: scale(2.2);
+  background: radial-gradient(circle, #4B6EF5 0%, transparent 70%);
+}
+.logo-img {
+  position: relative; height: 9rem; width: 9rem; object-fit: contain;
+  filter: drop-shadow(0 0 32px rgba(75,110,245,.5));
+}
+
+.hero-title {
+  font-size: clamp(4.5rem, 14vw, 9.5rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.02em;
+  margin-bottom: .75rem;
+}
+
+.hero-sub {
+  font-size: clamp(1.1rem, 2.5vw, 1.75rem);
+  font-weight: 300;
+  color: #94A3B8;
+  margin-bottom: 1.25rem;
+}
+
+.hero-desc {
+  font-size: 1.05rem;
+  color: #64748B;
+  max-width: 42rem;
+  margin: 0 auto 2.5rem;
+  line-height: 1.7;
+}
+
+.cta-row { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+
+.cta-primary {
+  padding: .75rem 2rem; border-radius: 9999px;
+  font-weight: 600; color: #fff; text-decoration: none;
+  background: linear-gradient(135deg, #4B6EF5, #7C3AED);
+  box-shadow: 0 0 30px rgba(75,110,245,.35);
+  transition: transform .2s, box-shadow .2s;
+}
+.cta-primary:hover { transform: scale(1.04); box-shadow: 0 0 50px rgba(75,110,245,.5); }
+
+.cta-ghost {
+  padding: .75rem 2rem; border-radius: 9999px;
+  font-weight: 600; text-decoration: none; color: #E4E7F0;
+  transition: transform .2s;
+}
+.cta-ghost:hover { transform: scale(1.04); }
+
+.scroll-hint {
+  position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: .4rem;
+  color: #374151; font-size: .75rem;
+  animation: sc-bounce 2s ease-in-out infinite;
+}
+@keyframes sc-bounce {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(8px); }
+}
+</style>

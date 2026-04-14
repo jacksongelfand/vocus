@@ -1,0 +1,318 @@
+---
+// Drop image files into public/photos/ matching these src paths to populate the gallery.
+const photoSlots = [
+  { label: 'Front view',      src: '/photos/front.jpg'    },
+  { label: 'Rear view',     src: '/photos/rear.jpg'      },
+  { label: 'Side / internals',src: '/photos/side.jpg'     },
+  { label: 'In action',       src: '/photos/action.jpg'   },
+];
+
+// STL files available in public/stl/ — add entries here as you add models
+// opacity defaults to 1 if omitted
+const stlModels = [
+  { file: '/stl/box.stl',              label: 'Enclosure body',  color: '#4B6EF5', opacity: 0.92 },
+  { file: '/stl/lid2.stl',             label: 'Lid',             color: '#ffffff' },
+  { file: '/stl/button_cap_ok.stl',    label: 'Button (OK)',     color: '#22c55e' },
+  { file: '/stl/button_cap_back.stl',  label: 'Button (Back)',   color: '#ef4444' },
+  { file: '/stl/button_cap_arrow.stl', label: 'Button (Arrow)',  color: '#f97316' },
+];
+---
+
+<section id="model" class="py-28 max-w-6xl mx-auto px-6">
+  <div class="text-center mb-16 reveal">
+    <span class="section-label">Design</span>
+    <h2 class="text-4xl md:text-5xl font-bold mb-4">3D Model</h2>
+    <p class="text-gray-500">Drag to rotate · Scroll to zoom · Switch parts below</p>
+  </div>
+
+  <div class="reveal">
+    <!-- Model selector -->
+    <div class="flex flex-wrap gap-2 mb-4">
+      {stlModels.map((m, i) => (
+        <button
+          class={`stl-btn${i === 0 ? ' active' : ''}`}
+          data-stl={m.file}
+          data-color={m.color}
+          data-opacity={m.opacity ?? 1}
+        >{m.label}</button>
+      ))}
+    </div>
+
+    <!-- Three.js canvas -->
+    <div id="stl-zone" class="stl-zone relative overflow-hidden" style="height:520px;background:rgba(0,0,0,.45)">
+      <canvas id="stl-canvas" style="width:100%;height:100%;display:block"></canvas>
+      <div id="stl-hint" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-gray-600">
+        <div class="text-6xl mb-3">⏳</div>
+        <p class="font-medium text-gray-500">Loading model…</p>
+      </div>
+      <div class="absolute bottom-4 right-5 font-mono text-xs text-gray-700">
+        drag · scroll · two-finger pan
+      </div>
+    </div>
+
+    <!-- Photo gallery -->
+    <div class="mt-12">
+      <h3 class="text-lg font-semibold mb-6 text-center">Device Photos</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="photo-grid">
+        {photoSlots.map(slot => (
+          <div class="photo-cell" data-label={slot.label} data-src={slot.src} style="cursor:zoom-in">
+            <img src={slot.src} alt={slot.label} loading="lazy" />
+            <span class="photo-label">{slot.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Photo lightbox -->
+<div id="photo-modal" class="photo-modal" aria-hidden="true">
+  <button id="photo-modal-close" aria-label="Close">&times;</button>
+  <img id="photo-modal-img" src="" alt="" />
+  <p id="photo-modal-label"></p>
+</div>
+
+<script>
+  import * as THREE from 'three';
+  import { STLLoader }     from 'three/examples/jsm/loaders/STLLoader.js';
+  import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+  const canvas = document.getElementById('stl-canvas') as HTMLCanvasElement;
+  const hint   = document.getElementById('stl-hint') as HTMLElement;
+  const zone   = document.getElementById('stl-zone') as HTMLElement;
+
+  // ── Renderer ──────────────────────────────────────────
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
+  renderer.shadowMap.enabled = true;
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 1000);
+  camera.position.set(0, 2, 6);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping   = true;
+  controls.dampingFactor   = 0.06;
+  controls.autoRotate      = true;
+  controls.autoRotateSpeed = 1.6;
+  controls.minDistance     = 1;
+  controls.maxDistance     = 30;
+
+  // ── Lighting ──────────────────────────────────────────
+  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+  const key = new THREE.DirectionalLight(0x8BA4FD, 2.5);
+  key.position.set(4, 8, 6);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xFBA472, 1.2);
+  fill.position.set(-6, -2, -4);
+  scene.add(fill);
+
+  // ── Placeholder: hexagonal prism (echoes the logo) ───
+  function makePlaceholder(): THREE.Group {
+    const g = new THREE.Group();
+
+    const hex = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.3, 1.3, 0.55, 6),
+      new THREE.MeshPhongMaterial({ color: 0x3B5EE8, emissive: 0x0d1a70, emissiveIntensity: 0.45, shininess: 80, transparent: true, opacity: 0.88 })
+    );
+    g.add(hex);
+
+    const chip = new THREE.Mesh(
+      new THREE.BoxGeometry(0.9, 0.18, 0.9),
+      new THREE.MeshPhongMaterial({ color: 0x0d1025, shininess: 200 })
+    );
+    chip.position.y = 0.36;
+    g.add(chip);
+
+    const ant = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.03, 0.08, 0.55, 8),
+      new THREE.MeshPhongMaterial({ color: 0xF87239, emissive: 0x4a1800 })
+    );
+    ant.position.y = 0.82;
+    g.add(ant);
+
+    for (let i = 1; i <= 3; i++) {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(i * 0.22, 0.018, 8, 32, Math.PI * 0.7),
+        new THREE.MeshBasicMaterial({ color: 0x8BA4FD, transparent: true, opacity: 0.65 / i })
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.rotation.z = -Math.PI / 4;
+      ring.position.set(0.45, 0.5 + i * 0.04, 0);
+      g.add(ring);
+    }
+
+    const led = new THREE.Mesh(
+      new THREE.SphereGeometry(0.09, 12, 12),
+      new THREE.MeshBasicMaterial({ color: 0x4ade80 })
+    );
+    led.position.set(0, -0.28, 1.22);
+    g.add(led);
+    const glow = new THREE.PointLight(0x4ade80, 0.6, 2.5);
+    glow.position.copy(led.position);
+    g.add(glow);
+
+    return g;
+  }
+
+  let model: THREE.Object3D = makePlaceholder();
+  scene.add(model);
+
+  // ── Resize ────────────────────────────────────────────
+  function resize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  new ResizeObserver(resize).observe(canvas);
+
+  // ── Render loop ───────────────────────────────────────
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // ── STL loading ───────────────────────────────────────
+  const loader = new STLLoader();
+
+  function loadSTLBuffer(buffer: ArrayBuffer, color = '#4B6EF5', opacity = 0.92) {
+    const geo = loader.parse(buffer);
+    geo.computeBoundingBox();
+    const center = new THREE.Vector3();
+    geo.boundingBox!.getCenter(center);
+    geo.translate(-center.x, -center.y, -center.z);
+
+    const size = new THREE.Vector3();
+    geo.boundingBox!.getSize(size);
+    const scale = 4 / Math.max(size.x, size.y, size.z);
+
+    const isTransparent = opacity < 1;
+    const mat = new THREE.MeshPhongMaterial({
+      color:      new THREE.Color(color),
+      specular:   new THREE.Color('#ffffff'),
+      shininess:  isTransparent ? 140 : 80,
+      transparent: isTransparent,
+      opacity,
+      depthWrite: !isTransparent,
+      side:       isTransparent ? THREE.DoubleSide : THREE.FrontSide,
+    });
+
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.scale.setScalar(scale);
+
+    scene.remove(model);
+    model = mesh;
+    scene.add(model);
+    hint.style.display = 'none';
+  }
+
+  async function loadSTLUrl(url: string, color?: string, opacity?: number) {
+    hint.style.display = 'flex';
+    (hint.querySelector('p') as HTMLElement).textContent = 'Loading…';
+    const buf = await fetch(url).then(r => r.arrayBuffer());
+    loadSTLBuffer(buf, color, opacity);
+  }
+
+  // ── Selector buttons ──────────────────────────────────
+  document.querySelectorAll<HTMLButtonElement>('.stl-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.stl-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadSTLUrl(btn.dataset.stl!, btn.dataset.color, Number(btn.dataset.opacity));
+    });
+  });
+
+  const firstBtn = document.querySelector<HTMLButtonElement>('.stl-btn');
+  if (firstBtn?.dataset.stl) {
+    loadSTLUrl(firstBtn.dataset.stl, firstBtn.dataset.color, Number(firstBtn.dataset.opacity));
+  }
+
+  // ── Drag & drop STL files onto viewer ────────────────
+  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    const file = e.dataTransfer?.files[0];
+    if (!file?.name.toLowerCase().endsWith('.stl')) return;
+    document.querySelectorAll('.stl-btn').forEach(b => b.classList.remove('active'));
+    file.arrayBuffer().then(buf => loadSTLBuffer(buf));
+  });
+
+  // ── Photo gallery — show real images, click to enlarge ─
+  const photoModal      = document.getElementById('photo-modal')!;
+  const photoModalImg   = document.getElementById('photo-modal-img') as HTMLImageElement;
+  const photoModalLabel = document.getElementById('photo-modal-label')!;
+  const photoModalClose = document.getElementById('photo-modal-close')!;
+
+  function openPhotoModal(src: string, label: string) {
+    photoModalImg.src = src;
+    photoModalImg.alt = label;
+    photoModalLabel.textContent = label;
+    photoModal.classList.add('open');
+    photoModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+  function closePhotoModal() {
+    photoModal.classList.remove('open');
+    photoModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  photoModalClose.addEventListener('click', closePhotoModal);
+  photoModal.addEventListener('click', e => { if (e.target === photoModal) closePhotoModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePhotoModal(); });
+
+  document.querySelectorAll<HTMLElement>('.photo-cell').forEach(cell => {
+    cell.addEventListener('click', () => {
+      openPhotoModal(cell.dataset.src!, cell.dataset.label!);
+    });
+  });
+</script>
+
+<style>
+  .photo-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+  }
+
+  .photo-label {
+    display: none;
+  }
+
+  /* Photo lightbox */
+  .photo-modal {
+    display: none;
+    position: fixed; inset: 0; z-index: 1001;
+    background: rgba(7,11,22,.92);
+    backdrop-filter: blur(8px);
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: .75rem;
+  }
+  .photo-modal.open { display: flex; }
+
+  #photo-modal-img {
+    max-width: 90vw; max-height: 82vh;
+    border-radius: .75rem;
+    box-shadow: 0 0 60px rgba(0,0,0,.6);
+    object-fit: contain;
+  }
+
+  #photo-modal-label {
+    color: #9CA3AF; font-size: .85rem;
+  }
+
+  #photo-modal-close {
+    position: fixed; top: 1.25rem; right: 1.5rem;
+    background: none; border: none;
+    color: #6B7280; font-size: 2rem; line-height: 1;
+    cursor: pointer; transition: color .15s;
+  }
+  #photo-modal-close:hover { color: #E4E7F0; }
+</style>

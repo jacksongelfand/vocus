@@ -1,0 +1,28 @@
+---
+const stats = [
+  { value: '3',     label: 'Sensors in one chip' },
+  { value: '2s',   label: 'Update interval'  },
+  { value: '3',     label: 'Alert severity levels'},
+  { value: '12v', label: 'External fan support'}
+];
+---
+<section class="stats-band">
+  <div class="max-w-6xl mx-auto px-6 py-14">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      {stats.map((s, i) => (
+        <div class="reveal" style={`transition-delay:${i * 0.1}s`}>
+          <div class="text-5xl font-black grad">{s.value}</div>
+          <div class="mt-2 text-sm text-gray-500">{s.label}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+.stats-band {
+  background: rgba(0,0,0,.22);
+  border-top: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+</style>

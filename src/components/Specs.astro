@@ -1,0 +1,76 @@
+---
+const mcu = [
+  ['Module',    'Raspberry Pi Pico 2'],
+  ['CPU',       'RP2350 dual-core Cortex-M33'],
+  ['Clock',     '150 MHz'],
+  ['RAM',       '520 KB SRAM'],
+  ['Flash',     '4 MB'],
+  ['Firmware',  'MicroPython'],
+];
+
+const sensor = [
+  ['Interface',    'I²C @ 400 kHz · addr 0x77'],
+  ['Temperature',  '−40 to +85 °C (± 1.0 °C)'],
+  ['Humidity',     '0 – 100 % RH (± 3 %)'],
+  ['Pressure',     '300 – 1100 hPa'],
+  ['Gas sensor',   'Metal-oxide (MOX), heated ~320 °C'],
+  ['Gas range',    '10 Ω – 10 MΩ'],
+];
+
+const io = [
+  ['Display',    '16×2 I²C LCD, HD44780 + PCF8574 @ 0x27'],
+  ['Status LED', 'RGB, PWM common-cathode, 1 kHz'],
+  ['Int. fans',   'PWM @ 25 kHz, GPIO28, kick-start logic'],
+  ['Relay',      'GPIO19, normally-closed for external fan'],
+  ['Buzzer',     'Passive tone, 2000 Hz @ GPIO22'],
+  ['Buttons',    '4× tactile: UP / DOWN / SELECT / BACK'],
+];
+
+const sw = [
+  ['Sensor poll',      '2 000 ms'],
+  ['Display refresh',  '1 000 ms'],
+  ['Warmup time',      '60 s min (configurable)'],
+  ['Baseline samples', '5 readings averaged'],
+  ['WARN threshold',   '30% drop below baseline'],
+  ['ALERT threshold',  '50% drop below baseline'],
+  ['Baseline save',    'Every 5 min when changed'],
+  ['Log buffer',       '50 lines ring buffer (configurable)'],
+];
+---
+
+<section id="specs" class="py-28 max-w-6xl mx-auto px-6">
+  <div class="text-center mb-16 reveal">
+    <span class="section-label">Technical Details</span>
+    <h2 class="text-4xl md:text-5xl font-bold">Hardware Specifications</h2>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-8 reveal">
+    <!-- Left: MCU + Sensor -->
+    <div class="glass rounded-2xl overflow-hidden">
+      <table class="w-full spec-tbl">
+        <tr style="background:rgba(91,124,249,.08)">
+          <td colspan="2" class="font-semibold py-3 px-4" style="color:#8BA4FD">Microcontroller</td>
+        </tr>
+        {mcu.map(([k,v]) => <tr><th>{k}</th><td>{v}</td></tr>)}
+        <tr style="background:rgba(91,124,249,.08)">
+          <td colspan="2" class="font-semibold py-3 px-4" style="color:#8BA4FD">Gas Sensor — BME688</td>
+        </tr>
+        {sensor.map(([k,v]) => <tr><th>{k}</th><td>{v}</td></tr>)}
+      </table>
+    </div>
+
+    <!-- Right: I/O + Software -->
+    <div class="glass rounded-2xl overflow-hidden">
+      <table class="w-full spec-tbl">
+        <tr style="background:rgba(248,114,57,.08)">
+          <td colspan="2" class="font-semibold py-3 px-4" style="color:#FBA472">I/O Components</td>
+        </tr>
+        {io.map(([k,v]) => <tr><th>{k}</th><td>{v}</td></tr>)}
+        <tr style="background:rgba(248,114,57,.08)">
+          <td colspan="2" class="font-semibold py-3 px-4" style="color:#FBA472">Software Parameters</td>
+        </tr>
+        {sw.map(([k,v]) => <tr><th>{k}</th><td>{v}</td></tr>)}
+      </table>
+    </div>
+  </div>
+</section>

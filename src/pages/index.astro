@@ -1,0 +1,34 @@
+---
+import Layout    from '../layouts/Layout.astro';
+import Nav       from '../components/Nav.astro';
+import Hero      from '../components/Hero.astro';
+import StatsBand from '../components/StatsBand.astro';
+import About     from '../components/About.astro';
+import Diagrams  from '../components/Diagrams.astro';
+import STLViewer from '../components/STLViewer.astro';
+import TestData  from '../components/TestData.astro';
+import Specs     from '../components/Specs.astro';
+import Footer    from '../components/Footer.astro';
+import '../styles/global.css';
+---
+
+<Layout title="Vocus — VOC Monitor">
+  <Nav />
+  <Hero />
+  <StatsBand />
+  <About />
+  <Diagrams />
+  <STLViewer />
+  <TestData />
+  <Specs />
+  <Footer />
+</Layout>
+
+<!-- Scroll reveal observer (global, runs once) -->
+<script>
+  const obs = new IntersectionObserver(
+    entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); }),
+    { threshold: 0.08 }
+  );
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
