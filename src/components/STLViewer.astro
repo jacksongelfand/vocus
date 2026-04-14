@@ -1,10 +1,11 @@
 ---
 // Drop image files into public/photos/ matching these src paths to populate the gallery.
+const prefix = import.meta.env.BASE_URL
 const photoSlots = [
-  { label: 'Front view',      src: '/photos/front.jpg'    },
-  { label: 'Rear view',     src: '/photos/rear.jpg'      },
-  { label: 'Side / internals',src: '/photos/side.jpg'     },
-  { label: 'In action',       src: '/photos/action.jpg'   },
+  { label: 'Front view',      src: prefix +  '/photos/front.jpg'    },
+  { label: 'Rear view',     src: prefix + '/photos/rear.jpg'      },
+  { label: 'Side / internals',src: prefix + '/photos/side.jpg'     },
+  { label: 'In action',       src: prefix + '/photos/action.jpg'   },
 ];
 
 // STL files available in public/stl/ — add entries here as you add models
